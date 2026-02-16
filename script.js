@@ -309,6 +309,52 @@ async function renderPage(pageNum) {
   // Update page indicator
   totalPages = pdfJSDoc.numPages || totalPages;
   document.getElementById('page-indicator').textContent = `Page ${currentPageNum} / ${totalPages}`;
+
+  // Debug: draw field rectangles on the canvas so we can visually verify
+  // whether PDF rendering lines up with overlay elements (useful on mobile).
+  try {
+    if (debugToggle && debugToggle.checked) {
+      try {
+        const dbgCtx = canvas.getContext('2d');
+        dbgCtx.save();
+        // Draw in CSS/device pixels space matching how we rendered
+        dbgCtx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+        dbgCtx.lineWidth = Math.max(1, 2);
+        pdfFields.filter(f => f.page === pageNum).forEach(f => {
+          if (!f.rect) return;
+          try {
+            const vpRect = viewport.convertToViewportRectangle(f.rect);
+            const left = Math.min(vpRect[0], vpRect[2]);
+            const top = Math.min(vpRect[1], vpRect[3]);
+            const width = Math.abs(vpRect[2] - vpRect[0]);
+            const height = Math.abs(vpRect[3] - vpRect[1]);
+            dbgCtx.strokeStyle = 'rgba(255,0,0,0.9)';
+            dbgCtx.fillStyle = 'rgba(255,0,0,0.15)';
+            dbgCtx.strokeRect(left, top, width, height);
+            dbgCtx.fillRect(left, top, width, height);
+          } catch (e) { /* ignore per-field errors */ }
+        });
+        dbgCtx.restore();
+      } catch (e) { console.warn('Debug draw failed', e); }
+
+      // Log helpful diagnostics for mobile debugging
+      console.log('PDF debug:', {
+        devicePixelRatio: window.devicePixelRatio,
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+        canvasStyleWidth: canvas.style.width,
+        canvasStyleHeight: canvas.style.height,
+        overlayStyleWidth: overlay.style.width,
+        overlayStyleHeight: overlay.style.height,
+        viewportWidth: viewport.width,
+        viewportHeight: viewport.height,
+        currentScale,
+        pageWidthPts,
+        pageHeightPts,
+        pdfFieldsCount: pdfFields.filter(f => f.page === pageNum).length
+      });
+    }
+  } catch (e) { console.warn('Debug checks failed', e); }
 }
 
 // ----------------------
