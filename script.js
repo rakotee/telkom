@@ -668,6 +668,20 @@ window.addEventListener('resize', () => {
   // Debounce resize to avoid triggering overlapping PDF.js renders on mobile
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
+    // If the user is typing into a form control, avoid re-rendering the
+    // PDF which causes inputs to be recreated and thus blurs the focused
+    // element. This prevents the Android keyboard from closing/reopening.
+    try {
+      const active = document.activeElement;
+      const tag = active && active.tagName && active.tagName.toLowerCase();
+      const isTyping = !!(active && (tag === 'input' || tag === 'textarea' || active.isContentEditable || overlay.contains(active)));
+      if (isTyping) {
+        // still resize signature canvas for crispness, but skip full re-render
+        fixSignatureCanvasDPR();
+        return;
+      }
+    } catch (e) { /* ignore and continue to re-render */ }
+
     loadAndRender();
     fixSignatureCanvasDPR();
   }, 200);
