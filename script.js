@@ -245,10 +245,18 @@ async function renderPage(pageNum) {
   canvas.height = Math.floor(viewport.height * outputScale);
   canvas.style.width = `${Math.floor(viewport.width)}px`;
   canvas.style.height = `${Math.floor(viewport.height)}px`;
-  context.setTransform(outputScale, 0, 0, outputScale, 0, 0);
 
-  // Render PDF page into canvas
-  const renderContext = { canvasContext: context, viewport };
+  // Use an offscreen (temporary) canvas for PDF.js rendering so multiple
+  // render() operations don't try to use the same visible canvas concurrently.
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = canvas.width;
+  tempCanvas.height = canvas.height;
+  const tempCtx = tempCanvas.getContext('2d');
+  // pdf.js expects the canvasContext to be in device pixels; do not apply
+  // additional transforms to tempCtx.
+
+  // Render PDF page into the offscreen canvas
+  const renderContext = { canvasContext: tempCtx, viewport };
   // If a previous render is in progress, cancel it and wait for it to finish
   if (currentRenderTask) {
     try {
@@ -259,10 +267,20 @@ async function renderPage(pageNum) {
     } catch (e) {}
   }
 
-  // Start new render
+
+  // Start new render into temp canvas
   currentRenderTask = pdfPage.render(renderContext);
   try {
     await currentRenderTask.promise;
+
+    // Copy rendered pixels from the offscreen canvas to the visible canvas.
+    // Temporarily reset transforms so we draw into device pixel space.
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(tempCanvas, 0, 0);
+    // Restore transform so overlay coordinate calculations remain consistent
+    context.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+
   } catch (err) {
     // If render was cancelled, ignore; otherwise log and rethrow
     if (err && err.name && err.name.toLowerCase().includes('cancel')) {
