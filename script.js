@@ -252,8 +252,9 @@ async function renderPage(pageNum) {
   tempCanvas.width = canvas.width;
   tempCanvas.height = canvas.height;
   const tempCtx = tempCanvas.getContext('2d');
-  // pdf.js expects the canvasContext to be in device pixels; do not apply
-  // additional transforms to tempCtx.
+  // Apply the device pixel ratio transform on the temp context so pdf.js
+  // renders at the correct scale (keeps overlay coordinates aligned).
+  tempCtx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
 
   // Render PDF page into the offscreen canvas
   const renderContext = { canvasContext: tempCtx, viewport };
