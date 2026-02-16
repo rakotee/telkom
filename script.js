@@ -31,6 +31,8 @@ let totalPages = 1;
 let fieldCounter = 0;
 let pdfFields = []; // collected form widget metadata from PDF.js
 let activeSigField = null;
+let currentRenderTask = null;
+let resizeTimer = null;
 
 // DOM
 const canvas = document.getElementById('pdf-canvas');
@@ -247,7 +249,31 @@ async function renderPage(pageNum) {
 
   // Render PDF page into canvas
   const renderContext = { canvasContext: context, viewport };
-  await pdfPage.render(renderContext).promise;
+  // If a previous render is in progress, cancel it and wait for it to finish
+  if (currentRenderTask) {
+    try {
+      if (typeof currentRenderTask.cancel === 'function') currentRenderTask.cancel();
+    } catch (e) {}
+    try {
+      await currentRenderTask.promise.catch(() => {});
+    } catch (e) {}
+  }
+
+  // Start new render
+  currentRenderTask = pdfPage.render(renderContext);
+  try {
+    await currentRenderTask.promise;
+  } catch (err) {
+    // If render was cancelled, ignore; otherwise log and rethrow
+    if (err && err.name && err.name.toLowerCase().includes('cancel')) {
+      // cancelled - ignore
+    } else {
+      console.error('Render error', err);
+      throw err;
+    }
+  } finally {
+    currentRenderTask = null;
+  }
 
   // Resize and populate overlay for this page
   overlay.style.width = canvas.style.width;
@@ -557,10 +583,12 @@ function fixSignatureCanvasDPR() {
 }
 
 window.addEventListener('resize', () => {
-  // re-render PDF on resize to keep overlay in sync
-  // keep it simple and re-run full render
-  loadAndRender();
-  fixSignatureCanvasDPR();
+  // Debounce resize to avoid triggering overlapping PDF.js renders on mobile
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    loadAndRender();
+    fixSignatureCanvasDPR();
+  }, 200);
 });
 
 // Initial signature canvas fix
