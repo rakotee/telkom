@@ -72,6 +72,8 @@ function downloadBytes(bytes, filename) {
 async function createFormOverlays(page, viewport, pageNum) {
   // clear any existing overlays on this page (DOM only)
   fieldsList.innerHTML = '';
+  const overlayFrag = document.createDocumentFragment();
+  const listFrag = document.createDocumentFragment();
 
   const annotations = await page.getAnnotations({ intent: 'display' });
   annotations.forEach((ann, idx) => {
@@ -153,7 +155,7 @@ async function createFormOverlays(page, viewport, pageNum) {
     el.style.padding = '2px';
     el.style.boxSizing = 'border-box';
 
-    overlay.appendChild(el);
+    overlayFrag.appendChild(el);
 
     // store or update metadata
     if (existing) {
@@ -183,8 +185,12 @@ async function createFormOverlays(page, viewport, pageNum) {
     // sidebar list
     const row = document.createElement('div');
     row.textContent = `${fieldName} (${type})`;
-    fieldsList.appendChild(row);
+    listFrag.appendChild(row);
   });
+
+  // Append fragments once to minimize reflows
+  overlay.appendChild(overlayFrag);
+  fieldsList.appendChild(listFrag);
 }
 
 function setPdfFieldValue(name, page, value) {
@@ -240,7 +246,9 @@ async function renderPage(pageNum) {
 
   // Set canvas size in device pixels for clarity
   const context = canvas.getContext('2d');
-  const outputScale = window.devicePixelRatio || 1;
+  // Clamp DPR to avoid extremely large bitmaps on some mobile devices which
+  // can cause slow rendering and memory issues. 2x is usually sufficient.
+  const outputScale = Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = Math.floor(viewport.width * outputScale);
   canvas.height = Math.floor(viewport.height * outputScale);
   canvas.style.width = `${Math.floor(viewport.width)}px`;
@@ -297,6 +305,9 @@ async function renderPage(pageNum) {
   // Resize and populate overlay for this page
   overlay.style.width = canvas.style.width;
   overlay.style.height = canvas.style.height;
+  // Improve touch responsiveness on mobile while preserving scrolling
+  try { if ('ontouchstart' in window) overlay.style.touchAction = 'manipulation'; } catch (e) {}
+  overlay.style.willChange = 'transform';
   overlay.innerHTML = ''; // clear previous inputs
   overlay.style.pointerEvents = 'auto';
 
@@ -363,6 +374,8 @@ async function renderPage(pageNum) {
 function createFieldInputs() {
   // Clear fields list (sidebar)
   fieldsList.innerHTML = '';
+  const overlayFrag = document.createDocumentFragment();
+  const listFrag = document.createDocumentFragment();
 
   // For each field on this page, create a contenteditable div with drag/resize
   fields.filter(f => (f.page || 1) === currentPageNum).forEach(f => {
@@ -471,7 +484,7 @@ function createFieldInputs() {
     wrapper.appendChild(fieldDiv);
     wrapper.appendChild(handle);
     wrapper.appendChild(removeBtn);
-    overlay.appendChild(wrapper);
+    overlayFrag.appendChild(wrapper);
 
     // Add an entry in the sidebar with a remove control
     const row = document.createElement('div');
@@ -497,8 +510,12 @@ function createFieldInputs() {
 
     row.appendChild(nameLabel);
     row.appendChild(del);
-    fieldsList.appendChild(row);
+    listFrag.appendChild(row);
   });
+
+  // Append fragments once
+  overlay.appendChild(overlayFrag);
+  fieldsList.appendChild(listFrag);
 
   // Also populate sidebar with a helpful hint when no fields
   if (fields.filter(f => (f.page || 1) === currentPageNum).length === 0) {
