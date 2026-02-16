@@ -1,0 +1,79 @@
+/* Minimal, professional styling */
+*{box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;margin:0;background:linear-gradient(135deg,#eef6ff 0%,#fbfdff 100%);color:#111}
+.app{max-width:1100px;margin:20px auto;padding:18px;background:rgba(255,255,255,0.96);border-radius:10px;box-shadow:0 6px 28px rgba(12,30,70,0.08)}
+header h1{margin:0 0 12px 0;font-size:20px}
+main{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.pdf-area{flex:1;min-width:360px}
+#pdf-container{position:relative;border:1px solid #e2e8f0;background:#fff;overflow:auto;max-width:100%;width:100%}
+#pdf-canvas{display:block;width:100%;height:auto}
+#overlay{position:absolute;left:0;top:0}
+#overlay input[type=text],#overlay textarea{position:absolute;border:1px solid rgba(0,0,0,0.18);background:rgba(255,255,255,0.8);padding:4px 6px;font-size:13px}
+#overlay input[type="checkbox"], #overlay input[type="radio"]{
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+#overlay input[type="checkbox"]:checked, #overlay input[type="radio"]:checked{
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 60% 60%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><polyline points='20 6 9 17 4 12' stroke='black' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+#overlay .field-wrapper{position:absolute}
+#overlay .remove-btn{position:absolute;right:-10px;top:-10px;background:#ff4d4f;color:#fff;border-radius:50%;width:20px;height:20px;border:none;cursor:pointer;font-size:12px}
+#add-field.active{background:#0747a6}
+/* editable field styles */
+.field-wrapper{box-sizing:border-box}
+.field{width:100%;height:100%;padding:4px 6px;border:1px dashed rgba(0,0,0,0.25);background:rgba(255,255,255,0.85);outline:none;overflow:hidden}
+.field:focus{border-color:#0b63d3;box-shadow:0 0 0 2px rgba(11,99,211,0.08)}
+.resize-handle{position:absolute;right:2px;bottom:2px;width:10px;height:10px;background:#0b63d3;border-radius:2px;cursor:se-resize}
+#overlay img.sig-preview{position:absolute;pointer-events:auto;border:1px dashed rgba(0,0,0,0.08);background:transparent}
+.sig-preview{cursor:move}
+
+/* Visual indicator for selected overlay element */
+.overlay-selected{outline:2px solid rgba(11,99,211,0.9);box-shadow:0 0 0 3px rgba(11,99,211,0.06);}
+#coord-display{position:absolute;right:8px;top:8px;background:rgba(0,0,0,0.7);color:#fff;padding:6px;border-radius:4px;font-size:12px}
+.hidden{display:none}
+.controls{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.controls label{display:inline-flex;align-items:center;gap:8px}
+.controls button{margin:0;padding:8px 12px}
+.form-area{width:360px}
+.form-area h2{margin-top:0}
+.signature-wrap canvas{width:100%;height:auto;border:1px solid #e2e8f0;background:#fff}
+.sig-controls{margin-top:8px}
+button{background:#0b63d3;color:#fff;border:none;padding:8px 10px;border-radius:6px;cursor:pointer}
+button:disabled{opacity:0.6}
+.note,.sig-note{font-size:13px;color:#444;margin-top:8px}
+footer{margin-top:16px;text-align:center;color:#666;font-size:13px}
+
+/* Small helper for temporary click marker */
+.marker{position:absolute;width:10px;height:10px;background:rgba(255,0,0,0.9);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+
+@media (max-width:880px){
+  main{flex-direction:column}
+  .form-area{width:100%}
+  .app{padding:12px}
+  .controls{gap:8px}
+  button{padding:10px 12px;font-size:15px}
+}
+
+@media (max-width:480px){
+  .controls{justify-content:space-between}
+  .controls button{flex:1 1 auto}
+  .controls .note{flex-basis:100%;margin-top:8px}
+}
+
+/* Cursor when Add Field mode is active */
+#pdf-container.add-field-mode, #pdf-container.add-field-mode #overlay { cursor: crosshair; }
+
+/* Hide the sidebar fields list and its heading while keeping signature controls available if needed */
+#fields-list, .form-area h2 { display: none !important; }

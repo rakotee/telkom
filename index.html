@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>PDF Fill & Sign (No Backend)</title>
+	<link rel="stylesheet" href="style.css" />
+	<!-- PDF.js -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+	<!-- pdf-lib -->
+	<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+	<!-- signature_pad -->
+	<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+</head>
+<body>
+	<div class="app">
+		<header>
+			<h1>PDF Fill & Sign</h1>
+		</header>
+
+		<main>
+			<section class="pdf-area">
+				<div id="pdf-container">
+					<canvas id="pdf-canvas"></canvas>
+					<div id="overlay"></div>
+					<div id="coord-display" class="hidden"></div>
+				</div>
+
+				<div class="controls">
+					  <label><input type="checkbox" id="debug-toggle"> Developer Coordinate Mode</label>
+					  <button id="add-field">Add Field</button>
+					  <button id="prev-page">◀ Prev</button>
+					  <span id="page-indicator">Page 1 / 1</span>
+					  <button id="next-page">Next ▶</button>
+					  <button id="download-btn">Download Flattened PDF</button>
+					  <button id="download-fillable-btn">Download Fillable PDF</button>
+					<div class="note">Click the PDF to get coordinates when Developer Mode is on.</div>
+				</div>
+			</section>
+
+			<section class="form-area">
+				<h2>Fields</h2>
+				<div id="fields-list"></div>
+
+				<h3>Signature</h3>
+				<div class="signature-wrap">
+					<canvas id="sig-pad" width="360" height="120"></canvas>
+					<div class="sig-controls">
+						<button id="clear-sig">Clear</button>
+						<button id="apply-sig">Apply Signature To Field</button>
+					</div>
+					<div class="sig-note">Draw your signature above. It will be embedded into the PDF.</div>
+				</div>
+			</section>
+		</main>
+
+		<footer>
+			<small>Open this folder in VS Code and use Live Server to run.</small>
+		</footer>
+	</div>
+
+	<script src="script.js"></script>
+</body>
+</html>
